@@ -18,10 +18,11 @@ Sending 2-wire event 0x0001 <--
 
 But the SDK supports constant carrier.
 
+Culprit looks to happen here:
+
 <img width="736" height="437" alt="image" src="https://github.com/user-attachments/assets/e6d80443-e7a9-461d-a8cf-df3344d87306" />
 
-
-So it never falls into the `DTM_TW_TO_HCI_STATUS_HCI_CMD` case in `main.c`.
+So it never falls into the `DTM_TW_TO_HCI_STATUS_HCI_CMD` case in `main.c` if you follow the `lib/dtm_twowire/dtm_twowire_to_hci.c` > `on_test_tx_cmd()` > `get_hci_param_pkt_payload()` chain of events.
 
 The [**constant_carrier**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) adds a workaround that
 intercepts the frame in main.c, hand-builds `0xFD23` with the TXPOWER, `bt_send()`s it, and maps the command complete status. 
