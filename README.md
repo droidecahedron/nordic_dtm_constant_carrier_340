@@ -5,7 +5,7 @@
 >
 > The **main** branch of this repository is just a 1:1 clone of direct_test_mode, with this readme for more information.
 >
-> The [**constant_carrier**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) branch contains the workaround.
+> The [**constantcarrier**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) branch contains the workaround.
 
 The direct test mode (DTM) sample in the nRF Connect SDK for Nordic devices was [changed](https://nrfconnectdocs.nordicsemi.com/ncs/latest/nrf/releases_and_maturity/releases/release-notes-3.4.0.html#bluetooth-samples) in version 3.4.x.
 
@@ -28,7 +28,7 @@ Culprit looks to happen here:
 
 So it never falls into the `DTM_TW_TO_HCI_STATUS_HCI_CMD` case in `main.c` if you follow the `lib/dtm_twowire/dtm_twowire_to_hci.c` > `on_test_tx_cmd()` > `get_hci_param_pkt_payload()` chain of events.
 
-The [**constant_carrier**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) adds a workaround that
+The [**constantcarrier branch**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) adds a workaround that
 intercepts the frame in main.c, hand-builds `0xFD23` with the TXPOWER, `bt_send()`s it, and maps the command complete status. 
 Succinctly it re-adds the 2-wire->VScmd translation that was removed, in the application code instead of the lib.
 
