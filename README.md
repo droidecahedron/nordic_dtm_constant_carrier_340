@@ -16,7 +16,7 @@ Received 2-wire command 0x9303
 Sending 2-wire event 0x0001 <-- 
 ```
 
-But the SDK supports constant carrier.
+But the nRF Connect 3.4.0 SDK supports constant carrier. ([src](https://github.com/nrfconnect/sdk-nrfxlib/blob/dbeb418f40ea6f06b5789d02758db3d0375ba555/softdevice_controller/include/sdc_hci_vs.h#L1942))
 
 Culprit looks to happen here:
 
@@ -41,3 +41,32 @@ Succinctly it re-adds the 2-wire->VScmd translation that was removed, in the app
 
 <img width="1271" height="359" alt="image" src="https://github.com/user-attachments/assets/86ac6d2a-6b85-4b7b-85bf-fe644619a18f" />
 
+
+## Extra
+
+> [!NOTE]
+> The API is being deprecated, but the feature should  not be.
+> 
+> In NCS v3.5.x and onward, 0xFD23 will lead to BT_HCI_ERR_UNKNOWN_CMD, looks to be fenced off in the 3.5+ branches by CONFIG_BT_HCI_SUPPORT_DEPRECATED_COMMANDS.
+>
+> It states "Use the Transmitter Carrier Test subcommand of the VS DTM command instead."
+> I.e. 0xFD23 -> 0xFC1F with a 1-byte sub opcode prefix, 0x1 for carrier test.
+
+```c
+typedef struct { uint8_t sub_opcode; } sdc_hci_vs_dtm_command_header_t;   /* 0x01 = carrier test */
+
+typedef struct {
+	sdc_hci_vs_dtm_command_header_t header;
+	uint8_t tx_channel;
+	int8_t  tx_power_level;
+} sdc_hci_cmd_vs_dtm_transmitter_carrier_test_t;
+```
+
+So the swap for this would probably something like this in `main.c`.
+```c
+cmd_hdr->opcode = sys_cpu_to_le16(0xFC1F);
+cmd_hdr->param_len = 3U;
+net_buf_add_u8(cmd, 0x01);          /* SDC_HCI_VS_DTM_COMMAND_OPCODE_TRANSMITTER_CARRIER_TEST */
+net_buf_add_u8(cmd, channel);
+net_buf_add_u8(cmd, (uint8_t)tx_power_level);
+```
