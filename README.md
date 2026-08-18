@@ -51,6 +51,24 @@ Succinctly it re-adds the 2-wire->VScmd translation that was removed, in the app
 >
 > It states "Use the Transmitter Carrier Test subcommand of the VS DTM command instead."
 > I.e. 0xFD23 -> 0xFC1F with a 1-byte sub opcode prefix, 0x1 for carrier test.
+>
+
+The standalone API `sdc_hci_cmd_vs_transmitter_carrier_test()` is explicitly marked **[DEPRECATED]** in the NCS 3.5.x+ `sdc_hci_vs.h`.
+
+Its standalone opcode remains `SDC_HCI_OPCODE_CMD_VS_TRANSMITTER_CARRIER_TEST = 0xfd23`.
+
+The replacement is the grouped command:
+
+    API: sdc_hci_cmd_vs_dtm_command()
+
+    Opcode: SDC_HCI_OPCODE_CMD_VS_DTM_COMMAND = 0xfc1f
+
+    Sub-opcode: SDC_HCI_VS_DTM_COMMAND_OPCODE_TRANSMITTER_CARRIER_TEST = 0x01
+
+    Parameters: sdc_hci_cmd_vs_dtm_transmitter_carrier_test_t
+
+The replacement command retains the same essential inputs: tx_channel and tx_power_level.
+The standalone API is still present in the current header for compatibility, but should no longer be used for new code.
 
 ```c
 typedef struct { uint8_t sub_opcode; } sdc_hci_vs_dtm_command_header_t;   /* 0x01 = carrier test */
