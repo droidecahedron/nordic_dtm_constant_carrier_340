@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > This repo is an unofficial modification to the dtm sample in ncs 3.4.0 to get constant carrier in the GUI to work as intended.
 >
-> The **main** branch of this repository is just a 1:1 clone of direct_test_mode.
+> The **main** branch of this repository is just a 1:1 clone of direct_test_mode, with this readme for more information.
 >
 > The [**constant_carrier**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) branch contains the workaround.
 
