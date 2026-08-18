@@ -5,7 +5,7 @@
  *
  * Based on samples/bluetooth/direct_test_mode/src/main.c from nRF Connect SDK v3.4.0,
  * with vendor-specific constant carrier (CARRIER_TEST / CARRIER_TEST_STUDIO) support
- * added on top of the SoftDevice Controller VS command
+ * added on top of the SoftDevice Controller vendor-specific HCI command
  * SDC_HCI_OPCODE_CMD_VS_TRANSMITTER_CARRIER_TEST (0xFD23).
  */
 
@@ -35,12 +35,20 @@ static K_FIFO_DEFINE(hci_c2h_queue);
 
 /* SDC_HCI_OPCODE_CMD_VS_TRANSMITTER_CARRIER_TEST, see nrfxlib sdc_hci_vs.h.
  * Requires CONFIG_BT_HCI_VS=y and CONFIG_BT_CTLR_DTM_HCI=y.
+ *
+ * Note: deprecated after v3.4.x in favour of SDC_HCI_OPCODE_CMD_VS_DTM_COMMAND
+ * (0xFC1F) with sub-opcode SDC_HCI_VS_DTM_COMMAND_OPCODE_TRANSMITTER_CARRIER_TEST.
  */
 #define SDC_HCI_OP_VS_TX_CARRIER_TEST 0xFD23
 
-/* TX_Power_Level values with special meaning, see sdc_hci_vs.h. */
-#define TX_POWER_LEVEL_MIN 0x7E
-#define TX_POWER_LEVEL_MAX 0x7F
+/* TX_Power_Level default, matching the conversion library's reset value
+ * (Bluetooth Core v6.2, Vol 6, Part F, 3.3.2). The library resets its buffered
+ * parameters with a memset, so an unset transmit power means 0 dBm.
+ *
+ * The values 0x7E and 0x7F select the controller's minimum and maximum
+ * transmit power and are passed through to the controller unmodified.
+ */
+#define TX_POWER_LEVEL_DEFAULT 0
 
 /* 2-wire command fields, see Bluetooth Core specification Vol 6, Part F, 3.3. */
 #define TW_CMD_CODE(c)      (((c) >> 14) & 0x03)
@@ -50,38 +58,20 @@ static K_FIFO_DEFINE(hci_c2h_queue);
 #define TW_CMD_CONTROL(c)   (((c) >> 8) & 0x3F)
 #define TW_CMD_PARAMETER(c) ((c) & 0xFF)
 
-#define TW_CMD_CODE_TEST_SETUP 0x00
-#define TW_CMD_CODE_TX_TEST    0x02
-#define TW_PKT_TYPE_VS         0x03
-#define TW_SETUP_CTRL_TX_POWER 0x09
-
 /* Length field values of the vendor-specific transmitter test command. */
 #define TW_VS_CARRIER_TEST        0x00
 #define TW_VS_CARRIER_TEST_STUDIO 0x01
 
-
-/* Matches the library's reset default (Core v6.2 Vol 6, Part F, 3.3.2). */
-#define TX_POWER_LEVEL_DEFAULT 0
-
+/* TX power the carrier is transmitted at. Shadowed from the 2-wire
+ * LE_Test_Setup commands so that a tester-selected power level is honored and
+ * a tester reset restores the default, mirroring the conversion library.
+ */
 static int8_t tx_power_level = TX_POWER_LEVEL_DEFAULT;
-
-static void tw_cmd_shadow_tx_power(uint16_t tw_cmd)
-{
-	if (TW_CMD_CODE(tw_cmd) != TW_CMD_CODE_TEST_SETUP) {
-		return;
-	}
-
-	if (TW_CMD_CONTROL(tw_cmd) == TW_SETUP_CTRL_RESET) {
-		tx_power_level = TX_POWER_LEVEL_DEFAULT;
-	} else if (TW_CMD_CONTROL(tw_cmd) == TW_SETUP_CTRL_TX_POWER) {
-		tx_power_level = (int8_t)TW_CMD_PARAMETER(tw_cmd);
-	}
-}
 
 static bool tw_cmd_is_carrier_test(uint16_t tw_cmd)
 {
-	if (TW_CMD_CODE(tw_cmd) != TW_CMD_CODE_TX_TEST ||
-	    TW_CMD_PKT_TYPE(tw_cmd) != TW_PKT_TYPE_VS) {
+	if (TW_CMD_CODE(tw_cmd) != DTM_TW_CMD_TRANSMITTER_TEST ||
+	    TW_CMD_PKT_TYPE(tw_cmd) != DTM_TW_PKT_0XFF_OR_VS) {
 		return false;
 	}
 
@@ -90,11 +80,23 @@ static bool tw_cmd_is_carrier_test(uint16_t tw_cmd)
 	return (length == TW_VS_CARRIER_TEST) || (length == TW_VS_CARRIER_TEST_STUDIO);
 }
 
-static void tw_cmd_track_tx_power(uint16_t tw_cmd)
+static void tw_cmd_shadow_tx_power(uint16_t tw_cmd)
 {
-	if (TW_CMD_CODE(tw_cmd) == TW_CMD_CODE_TEST_SETUP &&
-	    TW_CMD_CONTROL(tw_cmd) == TW_SETUP_CTRL_TX_POWER) {
+	if (TW_CMD_CODE(tw_cmd) != DTM_TW_CMD_TEST_SETUP) {
+		return;
+	}
+
+	switch (TW_CMD_CONTROL(tw_cmd)) {
+	case DTM_TW_TEST_SETUP_RESET:
+		tx_power_level = TX_POWER_LEVEL_DEFAULT;
+		break;
+
+	case DTM_TW_TEST_SETUP_TRANSMIT_POWER:
 		tx_power_level = (int8_t)TW_CMD_PARAMETER(tw_cmd);
+		break;
+
+	default:
+		break;
 	}
 }
 
@@ -161,7 +163,7 @@ int main(void)
 		/* Keep track of the tester-selected TX power, then let the
 		 * conversion library handle the command as usual.
 		 */
-		tw_cmd_track_tx_power(tw_cmd);
+		tw_cmd_shadow_tx_power(tw_cmd);
 
 		if (tw_cmd_is_carrier_test(tw_cmd)) {
 			const uint16_t tw_event = carrier_test_start(TW_CMD_CHANNEL(tw_cmd));
