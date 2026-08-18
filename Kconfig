@@ -1,0 +1,13 @@
+#
+# Copyright (c) 2026 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+mainmenu "Nordic DTM sample"
+
+module = DTM_TW_TRANSPORT
+module-str = "DTM 2-wire transport"
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
