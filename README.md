@@ -33,11 +33,13 @@ intercepts the frame in main.c, hand-builds `0xFD23` with the TXPOWER, `bt_send(
 Succinctly it re-adds the 2-wire->VScmd translation that was removed, in the application code instead of the lib.
 
 ## Results
-### Original sample, constant carrier TX. (Since it gets rejected, this can be considered the control. Starting/stopping TX results in no ch22 spikes)
+### Original sample, constant carrier TX.
+(Since it gets rejected, this can be considered the control. Starting/stopping TX results in no ch22 spikes)
 
 <img width="1271" height="359" alt="image" src="https://github.com/user-attachments/assets/dd94a76a-dd05-4da4-bba6-97857ddad10d" />
 
-### Original sample, PRBS9 TX. (You will see expected spike in channel spike)
+### Original sample, PRBS9 TX.
+(You will see expected spike in channel spike)
 
 <img width="1271" height="359" alt="image" src="https://github.com/user-attachments/assets/c2170b0b-e210-434f-9a7f-4380004b09ab" />
 
