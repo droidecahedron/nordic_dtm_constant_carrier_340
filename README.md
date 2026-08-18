@@ -7,6 +7,10 @@
 >
 > The [**constant_carrier**](https://github.com/droidecahedron/nordic_dtm_constant_carrier_340/tree/constantcarrier) branch contains the workaround.
 
+The direct test mode (DTM) sample in the nRF Connect SDK for Nordic devices was [changed](https://nrfconnectdocs.nordicsemi.com/ncs/latest/nrf/releases_and_maturity/releases/release-notes-3.4.0.html#bluetooth-samples) in version 3.4.x.
+
+Constant carrier with the nRF Connect for Desktop GUI may not give you the results you are looking for when attempting to test it.
+
 ## Explanation
 When you select constant carrier, you'll see an `EINVAL` if you enable RTT logs around the constant carrier command.
 
