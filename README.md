@@ -1,4 +1,9 @@
 # Bluetooth: Direct Test Mode
+# DEPRECATED
+
+## UPDATE
+As of 2 Sept 2026, support was [backported into NCS v3.4.0!](https://github.com/nrfconnect/sdk-nrf/pull/31006)
+So you don't need this workaround anymore.
 
 > [!IMPORTANT]
 > This repo is an unofficial modification to the dtm sample in ncs 3.4.0 to get constant carrier in the GUI to work as intended.
